@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -euo pipefail
 
 APP_NAME="availability-tracker"
 TAG="latest"
@@ -24,7 +24,9 @@ fi
 
 
 echo " Building Docker image..."
-docker build --cache-from=$APP_NAME:$TAG -t $APP_NAME:$TAG .
+docker build \
+  --cache-from=$APP_NAME:$TAG \
+  -t $APP_NAME:$TAG .
 
 
 echo "Starting application with Docker Compose..."
