@@ -2,20 +2,21 @@ version: "3.9"
 
 services:
   app:
-    image: availability-tracker:latest   # image built in ci.sh
+    image: availability-tracker:latest   # built in ci.sh
     container_name: availability-tracker
     restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - REDIS_HOST=redis 
-      - REDIS_PORT=6379
+      - REDIS_URL=redis://availability-redis:6379   # 🔹 matches server.js
     depends_on:
       - redis
+    volumes:
+      - ./output:/app/output   # persist history.json
     networks:
       - app-net
-    
+
   redis:
     image: redis:7-alpine
     container_name: availability-redis
@@ -23,10 +24,15 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - redis-data:/data
+      - redis-data:/data      # persist Redis data
     networks:
       - app-net
-  
+    healthcheck:              # optional, ensures app waits for Redis
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   redis-data:
 
