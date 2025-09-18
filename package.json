@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "script.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "echo \"No tests yet\" && exit 0",
+    "lint": "eslint .",
     "start": "node server.js"
   },
   "keywords": [],
@@ -20,3 +21,4 @@
     "globals": "^16.4.0"
   }
 }
+
