@@ -52,7 +52,7 @@ npm list    # This shows all installed packages
    -  Build a Docker image of the application.
    -  Start the application using Docker Compose.
   
-[`ci.sh`](Dockerfile)
+[`ci.sh`](ci.sh)
 ```bash
 #!/bin/bash
 
@@ -178,3 +178,25 @@ networks:
     driver: bridge
 ```
 ---
+
+### 5. **Verification**
+
+#### 5.1 Run your full pipeline locally to ensure it works.
+
+* Make the [`ci.sh`](ci.sh) script executable:
+    ```bash
+    chmod +x ci.sh
+    ./ci.sh
+    ```
+    ![](./images-sc/02.png)
+
+
+* **Confirm containers are running**
+  ![](./images-sc/03.png)
+
+
+* **Test the app in browser: `http://localhost:3000`**
+  ![](./images-sc/04.png)
+
+* **Check Redis data:**
+  ![](./images-sc/05.png)
