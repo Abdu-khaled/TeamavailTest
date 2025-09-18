@@ -12,7 +12,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "redis": "^5.8.2"
   },
   "devDependencies": {
     "@eslint/js": "^9.35.0",
@@ -21,4 +22,3 @@
     "globals": "^16.4.0"
   }
 }
-

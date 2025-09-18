@@ -19,4 +19,4 @@ EXPOSE 3000
 
 
 # Run the app
-CMD [ "node", "sever.js" ]
+CMD [ "node", "server.js" ]
