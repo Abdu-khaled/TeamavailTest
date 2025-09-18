@@ -9,7 +9,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - REDIS_URL=redis://availability-redis:6379   # 🔹 matches server.js
+      - REDIS_URL=redis://availability-redis:6379   # matches server.js
     depends_on:
       - redis
     volumes:
