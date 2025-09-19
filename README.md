@@ -9,7 +9,7 @@ The app is a Node.js service that tracks team availability. The pipeline automat
 *The project also includes optional extensions with GitHub Actions, Jenkins, and Terraform for simulating infrastructure.*
 
 
-## Project Tasks
+## Project Tasks (Stage-one)
 
 ### 1. **Set Up the Project**
 
@@ -200,3 +200,73 @@ networks:
 
 * **Check Redis data:**
   ![](./images-sc/05.png)
+
+---
+
+## Issues and Troubleshooting (Stage01)
+
+### 1. Redis Module Not Found
+ 
+* **What Happened:**
+  - When trying to require Redis in server.js (const redis = require('redis');), Node.js threw:
+
+* **Cause:**
+  - The Redis client library wasn’t installed in the project. The repo didn’t include it in package.json
+
+* **Solution:**
+  - Installed the Redis module with:
+  ```bash
+  npm install redis
+  ```
+
+---
+
+### 2. Redis Client Error (ClientClosedError)
+
+* **What Happened:**
+  - After installing Redis, running client.set(...) caused:
+  ```bash
+  Uncaught ClientClosedError: The client is closed
+  ```
+* **Cause:**
+  - Redis v5+ requires explicitly calling .connect() before using commands. The client was being used without a proper connection.
+
+* **Solution:**
+  - Updated server.js to connect first:
+  ```bash
+  const client = redis.createClient({
+    url: 'redis://availability-redis:6379'
+    });
+
+  # Connect to Redis
+  client.connect()
+    .then(() => console.log('Redis connected!'))
+    .catch((err) => console.error('Redis connection error:', err));
+  ```
+---
+
+### 3. Large JSON Output in Redis CLI
+
+* **What Happened:**
+  
+  - Running GET history in redis-cli returned a large JSON object as an escaped string, which was very hard to read.
+  
+
+* **Cause:**
+  - Redis CLI doesn’t format JSON output.
+
+* **Solution:**
+  - Installed RedisInsight to visualize data:
+  
+* **Installed with:**
+  ```bash
+  sudo dpkg -i redisinsight-linux64.deb
+  sudo apt --fix-broken install
+  ```
+* **Connected to Redis at localhost:6379.**
+
+* **Viewed the history key in pretty JSON/tree format.**
+
+####  **Verification**
+![](./images-sc/06.png)
+![](./images-sc/07.png)

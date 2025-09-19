@@ -7,12 +7,12 @@ const redis = require('redis'); // 🔹 Added Redis import
 const app = express();
 const PORT = 3000;
 
-// 🔹 Create Redis client (Docker Compose service name)
+// Create Redis client (Docker Compose service name)
 const client = redis.createClient({
   url: 'redis://availability-redis:6379'
 });
 
-// 🔹 Connect to Redis
+// Connect to Redis
 client.connect()
   .then(() => console.log('Redis connected!'))
   .catch((err) => console.error('Redis connection error:', err));
