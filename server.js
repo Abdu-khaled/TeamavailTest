@@ -82,6 +82,9 @@ app.get('/get-history', async (req, res) => {
   }
 });
 
+// Health check endpoint (for ALB/ECS)
+app.get('/health', (req, res) => res.status(200).send('OK'));
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
