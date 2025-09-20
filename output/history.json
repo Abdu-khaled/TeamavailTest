@@ -4,10 +4,19 @@
       "Mon": "Office",
       "Tue": "Office",
       "Wed": "Remote",
-      "Thu": "Casual",
+      "Thu": "Remote",
       "Fri": "Office",
       "Sat": "Casual",
       "Sun": "Sick"
+    },
+    "Week 1": {
+      "Mon": "Office",
+      "Tue": "Office",
+      "Wed": "Office",
+      "Thu": "Office",
+      "Fri": "Office",
+      "Sat": "Office",
+      "Sun": "Office"
     }
   },
   "emp_2": {
@@ -37,26 +46,35 @@
       "Fri": "Office",
       "Sat": "Casual",
       "Sun": "Sick"
+    },
+    "Week 16": {
+      "Mon": "Remote",
+      "Tue": "Remote",
+      "Wed": "Remote",
+      "Thu": "Remote",
+      "Fri": "Remote",
+      "Sat": "Remote",
+      "Sun": "Remote"
     }
   },
   "emp_1": {
     "Week 1": {
-      "Mon": "Empty",
-      "Tue": "Empty",
-      "Wed": "Empty",
-      "Thu": "Empty",
-      "Fri": "Empty",
-      "Sat": "Empty",
-      "Sun": "Empty"
+      "Mon": "Remote",
+      "Tue": "Remote",
+      "Wed": "Remote",
+      "Thu": "Remote",
+      "Fri": "Remote",
+      "Sat": "Remote",
+      "Sun": "Remote"
     },
     "Week 3": {
       "Mon": "Office",
-      "Tue": "Empty",
-      "Wed": "Empty",
-      "Thu": "Empty",
-      "Fri": "Empty",
-      "Sat": "Empty",
-      "Sun": "Empty"
+      "Tue": "Sick",
+      "Wed": "Sick",
+      "Thu": "Sick",
+      "Fri": "Sick",
+      "Sat": "Sick",
+      "Sun": "Sick"
     },
     "Week 5": {
       "Mon": "Office",
@@ -110,6 +128,15 @@
       "Fri": "Empty",
       "Sat": "Empty",
       "Sun": "Empty"
+    },
+    "Week 2": {
+      "Mon": "Office",
+      "Tue": "Office",
+      "Wed": "Office",
+      "Thu": "Office",
+      "Fri": "Office",
+      "Sat": "Office",
+      "Sun": "Office"
     }
   }
 }

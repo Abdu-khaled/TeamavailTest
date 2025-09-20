@@ -2,7 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const bodyParser = require('body-parser');
-const redis = require('redis'); // 🔹 Added Redis import
+const redis = require('redis');
 
 const app = express();
 const PORT = 3000;
@@ -26,6 +26,20 @@ app.use('/input', express.static(path.join(__dirname, 'input')));
 
 // Serve output folder (for history.json)
 app.use('/output', express.static(path.join(__dirname, 'output')));
+
+// Connect to Redis before using it
+async function connectRedis() {
+  try {
+    if (!client.isOpen) {
+      await client.connect();
+      console.log(`Connected to Redis at ${REDIS_HOST}:${REDIS_PORT}`);
+    }
+  } catch (err) {
+    console.error("Redis connection error:", err);
+    process.exit(1); // Exit if Redis is unreachable
+  }
+}
+connectRedis();
 
 // API to save history data
 app.post('/save-history', async (req, res) => {
@@ -53,7 +67,22 @@ app.post('/save-history', async (req, res) => {
   });
 });
 
+// New endpoint to read back history from Redis
+app.get('/get-history', async (req, res) => {
+  try {
+    const data = await client.get('history');
+    if (data) {
+      res.json(JSON.parse(data));
+    } else {
+      res.status(404).send('No history found in Redis');
+    }
+  } catch (err) {
+    console.error("Redis read error:", err);
+    res.status(500).send("Failed to read history from Redis");
+  }
+});
+
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
