@@ -8,8 +8,9 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=production
-      - REDIS_URL=redis://availability-redis:6379   # matches server.js
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
     depends_on:
       - redis
     volumes:
