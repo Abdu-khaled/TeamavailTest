@@ -14,9 +14,7 @@ yarn-error.log*
 
 # Terraform
 .terraform/
-
 *.tfstate
 *.tfstate.backup
-*.tfvars.lock*
 *.tfvars*
 crash.log
