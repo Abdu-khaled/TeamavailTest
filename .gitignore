@@ -17,4 +17,5 @@ yarn-error.log*
 *.tfstate
 *.tfstate.backup
 *.tfvars.lock
+*.tfvars
 crash.log
