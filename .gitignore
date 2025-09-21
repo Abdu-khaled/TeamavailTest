@@ -12,3 +12,9 @@ yarn-error.log*
 # Docker environment overrides
 .env
 
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfvars.lock
+crash.log
