@@ -55,7 +55,7 @@ pipeline {
 
             echo "****** Logging into ECR ******"
             aws ecr get-login-password --region $AWS_REGION | \
-              docker login --username AWS --password-stdin $ECR_REPO
+            docker login --username AWS --password-stdin $ECR_REPO
 
             echo "****** Building Docker image with two tags (commit + latest) ******"
             docker build -t $ECR_REPO:latest .
