@@ -34,7 +34,7 @@ pipeline {
 
     stage('Terraform ECR Only') {
       steps {
-        dir('terraform-ecs/ecr') {
+        dir('terraform-ecs/modules/ecr') {
           withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: env.AWS_CREDENTIALS_ID]]) {
             sh '''
               echo "****** Ensuring ECR repository exists ******"
