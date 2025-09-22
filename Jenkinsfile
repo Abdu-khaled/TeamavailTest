@@ -3,7 +3,6 @@ pipeline {
 
   environment {
     AWS_REGION = "eu-central-1"
-    COMMIT_SHA = "${env.GIT_COMMIT.take(7)}"    // short git commit for image tag
     REPO_NAME  = "availability-tracker"
     AWS_CREDENTIALS_ID = "aws-creds"
   }
@@ -61,7 +60,6 @@ pipeline {
             sudo docker build -t $ECR_REPO:latest .
 
             echo "****** Pushing both tags ******"
-            sudo docker push $ECR_REPO:$COMMIT_SHA
             sudo docker push $ECR_REPO:latest
           '''
         }
