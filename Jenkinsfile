@@ -51,11 +51,11 @@ pipeline {
         withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: env.AWS_CREDENTIALS_ID]]) {
           sh '''
             echo "****** Getting ECR repository URL ******"
-            ECR_REPO=$(terraform -chdir=terraform-ecs output -raw ecr_repo_url)
+            // ECR_REPO=$(terraform -chdir=terraform-ecs output -raw ecr_repo_url)
 
             echo "****** Logging into ECR ******"
             aws ecr get-login-password --region $AWS_REGION | \
-              docker login --username AWS --password-stdin $ECR_REPO
+              docker login --username AWS --password-stdin $REPO_NAME
 
             echo "****** Building Docker image with two tags (commit + latest) ******"
             docker build -t $ECR_REPO:latest .
