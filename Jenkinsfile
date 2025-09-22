@@ -1,5 +1,5 @@
 pipeline {
-  agent any
+  agent { label 'agent1' }
 
   environment {
     AWS_REGION = "eu-central-1"
@@ -55,14 +55,14 @@ pipeline {
 
             echo "****** Logging into ECR ******"
             aws ecr get-login-password --region $AWS_REGION | \
-            docker login --username AWS --password-stdin $ECR_REPO
+            sudo docker login --username AWS --password-stdin $ECR_REPO
 
             echo "****** Building Docker image with two tags (commit + latest) ******"
-            docker build -t $ECR_REPO:latest .
+            sudo docker build -t $ECR_REPO:latest .
 
             echo "****** Pushing both tags ******"
             // docker push $ECR_REPO:$COMMIT_SHA
-            docker push $ECR_REPO:latest
+            sudo docker push $ECR_REPO:latest
           '''
         }
       }
