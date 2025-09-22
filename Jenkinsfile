@@ -1,5 +1,5 @@
 pipeline {
-  agent { label 'agent1' }
+  agent any
 
   environment {
     AWS_REGION = "eu-central-1"
