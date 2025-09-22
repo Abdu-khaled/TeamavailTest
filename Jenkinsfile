@@ -51,7 +51,7 @@ pipeline {
         withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: env.AWS_CREDENTIALS_ID]]) {
           sh '''
             echo "****** Getting ECR repository URL ******"
-            // ECR_REPO=$(terraform -chdir=terraform-ecs output -raw ecr_repo_url)
+            ECR_REPO=$(terraform -chdir=terraform-ecs output -raw ecr_repo_url)
 
             echo "****** Logging into ECR ******"
             aws ecr get-login-password --region $AWS_REGION | \
