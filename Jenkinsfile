@@ -39,7 +39,7 @@ pipeline {
             sh '''
               echo "****** Ensuring ECR repository exists ******"
               terraform init -input=false
-              terraform apply -auto-approve -target=module.ecr.aws_ecr_repository.this
+              terraform apply -auto-approve -target=module.ecr
             '''
           }
         }
