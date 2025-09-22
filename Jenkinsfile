@@ -34,12 +34,12 @@ pipeline {
 
     stage('Terraform ECR Only') {
       steps {
-        dir('terraform-ecs') {
+        dir('terraform-ecs/ecr') {
           withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: env.AWS_CREDENTIALS_ID]]) {
             sh '''
               echo "****** Ensuring ECR repository exists ******"
               terraform init -input=false
-              terraform apply -auto-approve -target=aws_ecr_repository.this
+              terraform apply -auto-approve 
             '''
           }
         }
