@@ -3,10 +3,10 @@ module "vpc" {
   aws_region = var.aws_region
 }
 
-# module "ecr" {
-#   source    = "./modules/ecr"
-#   repo_name = "availability-tracker"
-# }
+module "ecr" {
+  source    = "./modules/ecr"
+  repo_name = "availability-tracker"
+}
 
 module "alb" {
   source    = "./modules/alb"
