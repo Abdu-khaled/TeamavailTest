@@ -13,17 +13,21 @@ pipeline {
     stage('Build & Test') {
       steps {
         sh '''
-          echo "****** Installing dependencies ******"
-          npm install
+        echo "****** Installing dependencies ******"
+        npm install
 
-          echo "****** Running ESLint ******"
-          npx eslint . || echo "ESLint found issues (not blocking build)."
+        echo "****** Running ESLint ******"
+        npx eslint . || echo " ESLint found issues (not blocking build)."
 
-          echo "****** Checking formatting with Prettier ******"
-          npx prettier --check . || echo "Prettier found issues (not blocking build)."
+        echo "****** Checking formatting with Prettier ******"
+        npx prettier --check . || echo "Prettier found issues (not blocking build)."
 
-          echo "****** Running tests ******"
-          npm test || echo "No tests found, skipping"
+        echo "****** Running tests ******"
+        if npm test; then
+            echo "Tests passed."
+        else
+            echo "No tests found or some tests failed (not blocking build)."
+        fi
         '''
       }
     }
