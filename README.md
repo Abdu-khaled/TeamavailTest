@@ -403,7 +403,7 @@ module "ecs" {
 
 ---
 
-### Variables
+### 1.4. Variables
 
 [`variables.tf`](./terraform-ecs/variables.tf)
 
@@ -432,7 +432,7 @@ variable "service_name" {
 ```
 ---
 
-### Outputs
+### 1.5. Outputs
 
 [`output.tf`](./terraform-ecs/output.tf)
 
