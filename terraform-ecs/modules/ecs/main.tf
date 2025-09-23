@@ -56,6 +56,13 @@ resource "aws_ecs_task_definition" "app" {
   ])
 }
 
+
+resource "aws_cloudwatch_log_group" "ecs" {
+  name              = "/ecs/${var.service_name}"
+  retention_in_days = 7 # keep logs for 7 days (adjust as needed)
+}
+
+
 resource "aws_ecs_service" "app" {
   name            = var.service_name
   cluster         = aws_ecs_cluster.this.id
@@ -75,6 +82,6 @@ resource "aws_ecs_service" "app" {
     container_port   = 3000
   }
 
-
+  depends_on = [aws_cloudwatch_log_group.ecs]
 }
 
