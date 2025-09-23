@@ -36,7 +36,7 @@ pipeline {
         dir('terraform-ecs') {
           withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: env.AWS_CREDENTIALS_ID]]) {
             sh '''
-              echo "****** Ensuring ECR repository exists ******"
+              echo "****** Creating ECR repository  ******"
               terraform init -input=false
               terraform apply -auto-approve -target=module.ecr
             '''

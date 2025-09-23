@@ -270,3 +270,9 @@ networks:
 ####  **Verification**
 ![](./images-sc/06.png)
 ![](./images-sc/07.png)
+---
+
+
+## Project (Stage-Two): CI/CD with Jenkins, Terraform, ECS, and ECR
+
+
