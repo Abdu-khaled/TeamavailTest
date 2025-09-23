@@ -72,7 +72,7 @@ pipeline {
           withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: env.AWS_CREDENTIALS_ID]]) {
             sh '''
               echo " Deploying application with Terraform..."
-              terraform apply -auto-approve -var="image_tag=$COMMIT_SHA"
+              terraform apply -auto-approve -var="image_tag=latest"
             '''
           }
         }

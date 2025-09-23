@@ -9,3 +9,7 @@ output "ecr_repo_url" {
 output "redis_endpoint" {
   value = module.redis.redis_endpoint
 }
+
+output "image" {
+  value = "${module.ecr.repo_url}:${var.image_tag}"
+}

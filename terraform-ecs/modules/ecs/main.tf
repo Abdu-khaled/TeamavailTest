@@ -75,5 +75,6 @@ resource "aws_ecs_service" "app" {
     container_port   = 3000
   }
 
+
 }
 
