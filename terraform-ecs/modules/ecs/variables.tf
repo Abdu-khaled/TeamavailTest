@@ -4,6 +4,11 @@ variable "vpc_subnets" { type = list(string) }
 variable "ecs_sg_id" {}
 variable "alb_target_group_arn" {}
 variable "ecr_repo_url" {}
-variable "image_tag" {}
 variable "redis_endpoint" {}
 variable "aws_region" {}
+
+variable "image_tag" {
+  description = "Tag for the docker image"
+  type        = string
+  default     = "latest"
+}
