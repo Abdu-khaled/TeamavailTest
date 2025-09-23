@@ -273,6 +273,213 @@ networks:
 ---
 
 
-## Project (Stage-Two): CI/CD with Jenkins, Terraform, ECS, and ECR
+## Project – Stage 2: AWS ECS CI/CD with Terraform & Jenkins
+
+
+### Stage 2 Overview
+
+*This project demonstrates a CI/CD pipeline that deploys a Node.js + Redis application on AWS ECS Fargate, using Terraform for infrastructure as code and Jenkins for automation.*
+
+**In Stage 1, the app (Node.js + Redis) was tested locally using Docker Compose.**
+
+**In Stage 2, we move the project to the cloud with a production-grade CI/CD pipeline:**
+
+* Terraform provisions AWS infrastructure.
+
+* Jenkins automates build, test, image push, and deployment.
+
+* The app runs on ECS Fargate, with ALB for routing, Redis (ElastiCache) for storage, and ECR for container images.
+---
+
+
+## 1. Terraform Setup (Infrastructure as Code)
+
+*In this stage, we use Terraform to provision all the AWS infrastructure required for our app.*
+*Instead of writing everything in one big main.tf, we follow best practice by using **modules**.*
+
+### Why Use Modules?
+Terraform modules allow us to organize infrastructure code into reusable units.
+
+* Each module represents one infrastructure component (VPC, ECS, Redis, ALB, etc.).
+
+* This makes the code cleaner, easier to maintain, and reusable across projects.
+
+---
+### 1.1. Backend Configuration
+
+I configure Terraform to store state in S3 with a DynamoDB lock table for safety.
+
+**[`backend.tf`](./terraform-ecs/backend.tf)**
+
+```bash
+terraform {
+  backend "s3" {
+    bucket         = "availability-tracker"
+    key            = "ecs/terraform.tfstate"
+    region         = "eu-central-1"
+    dynamodb_table = "tf-locks"
+    encrypt        = true
+  }
+}
+```
+**Why?**
+- S3 ensures state is persistent and shared across team members.
+
+- DynamoDB lock prevents multiple people from applying changes at the same time.
+  
+---
+### 1.2. Root Module [`main.tf`](./terraform-ecs/main.tf)
+
+The root [`main.tf`](./terraform-ecs/main.tf) ties all the modules together:
+
+```bash
+module "vpc" {
+  source     = "./modules/vpc"
+  aws_region = var.aws_region
+}
+
+module "ecr" {
+  source    = "./modules/ecr"
+  repo_name = "availability-tracker"
+}
+
+module "alb" {
+  source    = "./modules/alb"
+  vpc_id    = module.vpc.vpc_id
+  subnets   = module.vpc.public_subnets
+  alb_sg_id = module.vpc.alb_sg_id
+}
+
+module "redis" {
+  source     = "./modules/redis"
+  subnets    = module.vpc.public_subnets
+  redis_sg_id = module.vpc.redis_sg_id
+}
+
+module "ecs" {
+  source               = "./modules/ecs"
+  cluster_name         = var.cluster_name
+  service_name         = var.service_name
+  vpc_subnets          = module.vpc.public_subnets
+  ecs_sg_id            = module.vpc.ecs_sg_id
+  alb_target_group_arn = module.alb.target_group_arn
+  ecr_repo_url         = module.ecr.repo_url
+  image_tag            = var.image_tag
+  redis_endpoint       = module.redis.redis_endpoint
+  aws_region           = var.aws_region
+}
+```
+---
+### 1.3. Module Responsibilities
+
+**[`VPC`](./terraform-ecs/modules/vpc/) Module**
+- Creates VPC, public subnets, routetable, internet gateway.
+
+- Exposes subnet IDs + security groups.
+
+**[`ALB`](./terraform-ecs/modules/alb/) Module**
+
+- Creates Application Load Balancer.
+
+- Listener + target group for ECS tasks.
+
+**[`Redis`](./terraform-ecs/modules/redis/) Module**
+
+- Creates ElastiCache Redis cluster.
+
+- Accessible only from ECS security group.
+
+**[`ECR`](./terraform-ecs/modules/ecr/) Module**
+
+- Creates AWS ECR repository for app images.
+
+**[`ECS`](./terraform-ecs/modules/ecs/) Module**
+
+- Creates ECS Fargate Cluster.
+
+- Creates ECS Task Definition (points to ECR image).
+
+- Creates ECS Service (registers with ALB target group).
+
+---
+
+### Variables
+
+[`variables.tf`](./terraform-ecs/variables.tf)
+
+```bash
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+  default     = "eu-central-1"
+}
+
+variable "image_tag" {
+  description = "Docker image tag to deploy from ECR"
+  type        = string
+  default     = "latest"
+}
+
+variable "cluster_name" {
+  type    = string
+  default = "availability-cluster"
+}
+
+variable "service_name" {
+  type    = string
+  default = "availability-service"
+}
+```
+---
+
+### Outputs
+
+[`output.tf`](./terraform-ecs/output.tf)
+
+```bash
+output "alb_dns" {
+  value = module.alb.alb_dns_name
+}
+
+output "ecr_repo_url" {
+  value = module.ecr.repo_url
+}
+
+output "redis_endpoint" {
+  value = module.redis.redis_endpoint
+}
+
+output "image" {
+  value = "${module.ecr.repo_url}:${var.image_tag}"
+}
+```
+These outputs are used in Jenkins to push Docker images and deploy ECS.
+
+---
+
+### First-Time Bootstrap
+
+Since ECS service needs an image in ECR, we bootstrap in two steps:
+
+1. Create ECR only:
+  ```bash
+  terraform init -input=false
+  terraform apply -auto-approve -target=module.ecr
+  ```
+2. Build & push the first image:
+  ```bash
+   ECR_REPO=$(terraform -chdir=terraform-ecs output -raw ecr_repo_url)
+
+   aws ecr get-login-password --region $AWS_REGION | \
+   sudo docker login --username AWS --password-stdin $ECR_REPO
+   sudo docker build -t $ECR_REPO:latest .
+   sudo docker push $ECR_REPO:latest
+  ```
+3. Run full deploy:
+  ```
+  terraform apply -auto-approve -var="image_tag=latest"
+  ```
+---
+
 
 
