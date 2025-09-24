@@ -731,3 +731,38 @@ stage('Terraform Full Apply') {
   }
 }
 ```
+
+---
+
+## Verification Pipeline
+
+### 1. Pipeline Run
+![](./images-sc/14.png)
+**Console Output**
+![](./images-sc/15.png)
+
+### 2. ECR Check
+![](./images-sc/16.png)
+
+### 3. ECS Check
+![](./images-sc/17.png)
+
+### 4. ALB Test
+
+**Open DNS name:
+http://ecs-alb-767057541.eu-central-1.elb.amazonaws.com/**
+
+![](./images-sc/18.png)
+
+**Run API calls → verify history saved & retrieved.**
+
+**After add new date and save open Endpoint:**
+**http://ecs-alb-767057541.eu-central-1.elb.amazonaws.com/get-history**
+
+![](./images-sc/19.png)
+
+### 5. Logs CloudWatch 
+
+![](./images-sc/20.png)
+
+---
