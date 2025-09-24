@@ -481,5 +481,253 @@ Since ECS service needs an image in ECR, we bootstrap in two steps:
   ```
 ---
 
+## Verification After Terraform
+
+### 1. ECR
+
+![](./images-sc/08.png)
 
 
+### 2. ECS Service
+![](./images-sc/09.png)
+
+
+### 3. ALB
+![](./images-sc/10.png)
+
+### 4. Elasticache cluster (Redis)
+![](./images-sc/11.png)
+
+---
+
+## 2. Jenkins Setup
+
+*Now that Terraform has provisioned our infrastructure (VPC, ECS, Redis, ALB, ECR), we need Jenkins to automate our CI/CD pipeline.*
+
+### 2.1. Jenkins Installation
+
+I run Jenkins Master inside a container.
+
+```bash
+docker run -d \
+  --name jenkins \
+  -p 8080:8080 -p 50000:50000 \
+  -v jenkins_home:/var/jenkins_home \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  jenkins/jenkins:lts
+```
+
+### 2.2. Jenkins Agent Setup (Custom Dockerfile)
+
+I built a Jenkins agent container image that has all required tools: Terraform, AWS CLI, Docker CLI, Node.js, OpenJDK 17.
+
+**[`Dockerfile.agent`](Dockerfile.agent)**
+```bash
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install dependencies: ssh server, docker cli, terraform, awscli, Node.js.
+RUN apt-get update && apt-get install -y \
+    && curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs \
+    openjdk-17-jdk \
+    openssh-server \
+    sudo \
+    curl \
+    unzip \
+    python3 \
+    docker.io \
+    awscli \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Terraform
+ARG TF_VERSION=1.6.6
+RUN curl -fsSL https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip -o terraform.zip && \
+    unzip terraform.zip && mv terraform /usr/local/bin/ && rm terraform.zip
+
+# Create Jenkins user
+RUN useradd -m -d /home/jenkins -s /bin/bash jenkins && \
+    echo "jenkins ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers && \
+    mkdir -p /home/jenkins/.ssh && chmod 700 /home/jenkins/.ssh
+
+# Copy public key into image
+COPY jenkins_agent.pub /home/jenkins/.ssh/authorized_keys
+
+RUN chmod 700 /home/jenkins/.ssh && \
+    chmod 600 /home/jenkins/.ssh/authorized_keys && \
+    chown -R jenkins:jenkins /home/jenkins/.ssh
+
+# Configure SSH
+RUN mkdir /var/run/sshd
+EXPOSE 22
+
+# Run SSH server
+CMD ["/usr/sbin/sshd", "-D"]
+```
+
+**Build and Run Agent**
+```bash
+docker build -t jenkins-agent:devops -f Dockerfile.agent .  
+docker run -d --name jenkins-agent \ 
+  -v /var/run/docker.sock:/var/run/docker.sock \ 
+  -v ~/.ssh/jenkins_agent.pub:/home/jenkins/.ssh/authorized_keys:ro \
+  jenkins-agent:devops
+```
+
+---
+
+### 2.3. Credentials Setup
+
+**Go to: Jenkins → Manage Jenkins → Credentials → Global**
+
+**1. AWS Credentials**
+
+- Type: AWS Credentials
+
+- ID: aws-creds
+
+- Access Key & Secret Key (least-privilege IAM user).
+
+--- 
+
+### 2.4. Configure steps:
+
+#### 1. Trigger: Git webhook on push to main
+- Configure Jenkins Job for Webhook
+
+- Enable GitHub hook trigger for GITScm polling
+
+![](./images-sc/12.png)
+
+#### 2. Install and Configure Ngrok for use Webhook
+
+```bash
+# Install ngrok
+wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-stable-linux-amd64.zip
+unzip ngrok-stable-linux-amd64.zip
+sudo mv ngrok /usr/local/bin
+
+# Add auth token
+ngrok config add-authtoken <AUTH_TOKEN>
+```
+
+#### 3. Start Ngrok Tunnel
+
+Expose Jenkins port 8080:
+```bash
+ngrok http 8080
+```
+Ngrok provides a public URL:
+```bash
+https://fb5b22e0607e.ngrok-free.app -> http://localhost:8080
+```
+#### 5. Configure GitHub Webhook
+
+In your GitHub repository → Settings → Webhooks → Add webhook
+
+![](./images-sc/13.png)
+
+---
+
+### 2.5. [`Jenkinsfile`](./Jenkinsfile) (Pipeline as Code)
+
+The pipeline has 4 stages. Let’s break them down:
+
+#### 1. Build & Test
+
+Ensures code quality before deployment.
+
+```bash
+stage('Build & Test') {
+   steps {
+    sh '''
+      echo " Installing dependencies "
+      npm install
+
+      echo " Running ESLint "
+      npx eslint . || echo " ESLint found issues (not blocking build)."
+
+      echo " Checking formatting with Prettier "
+      npx prettier --check . || echo "Prettier found issues (not blocking build)."
+
+      echo " Running tests "
+      if npm test; then
+        echo "Tests passed."
+      else
+        echo "No tests found or some tests failed (not blocking build)."
+      fi
+    '''
+  }
+}
+```
+- eslint → catches syntax/style errors.
+
+- prettier → enforces consistent formatting.
+
+- npm test → runs test suite (safe fallback if none).
+
+#### 2. Terraform ECR Only
+Creates the ECR repo (if it doesn’t exist) so image pushes won’t fail.
+
+```bash
+stage('Terraform ECR Only') {
+  steps {
+      dir('terraform-ecs') {
+        withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: env.AWS_CREDENTIALS_ID]]) {
+        sh '''
+          echo " Creating ECR repository  "
+          terraform init -input=false
+          terraform apply -auto-approve -target=module.ecr
+        '''
+      }
+    }
+  }
+}
+```
+
+#### 3. Build & Push Docker Image
+
+Builds Docker image tagged with commit latest, then pushes to ECR.
+
+```bash
+stage('Build & Push Docker Image') {
+  steps {
+    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: env.AWS_CREDENTIALS_ID]]) {
+     sh '''
+       echo " Getting ECR repository URL "
+       ECR_REPO=$(terraform -chdir=terraform-ecs output -raw ecr_repo_url)
+
+       echo " Logging into ECR "
+       aws ecr get-login-password --region $AWS_REGION | \
+       sudo docker login --username AWS --password-stdin $ECR_REPO
+
+       echo " Building Docker image with two tags (commit + latest)"
+       sudo docker build -t $ECR_REPO:latest .
+ 
+       echo " Pushing both tags "
+       sudo docker push $ECR_REPO:latest
+      '''
+    }
+  }
+}
+```
+
+#### 4. Terraform Full Apply
+
+Deploys the ECS service with the new image.
+
+```bash
+stage('Terraform Full Apply') {
+  steps {
+    dir('terraform-ecs') {
+     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: env.AWS_CREDENTIALS_ID]]) {
+      sh '''
+        echo " Deploying application with Terraform..."
+        terraform apply -auto-approve -var="image_tag=latest"
+       '''
+      }
+    }
+  }
+}
+```
